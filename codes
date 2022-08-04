@@ -1,0 +1,117 @@
+#include<Servo.h>
+#include<LiquidCrystal.h>
+#include <IRremote.h>
+#include<IRremote.h>
+int IRpin=11;
+IRrecv IR(IRpin);
+int LED=12;
+
+LiquidCrystal lcd(A1,10,9,6,5,3);
+const int pingPin = 7;
+int servoPin = 8;
+Servo servo1;
+
+unsigned long interval = 0; 
+int t=5000;
+int t1=200;
+
+
+void setup() 
+{
+  Serial.begin(9600);
+  servo1.attach(servoPin);
+  lcd.begin(16, 2);
+  pinMode(2,INPUT);
+  pinMode(4,OUTPUT);
+  digitalWrite(2,LOW);
+  digitalWrite(3,OUTPUT);
+  digitalWrite(7,OUTPUT);
+  
+  pinMode(IRpin,INPUT);
+  pinMode(LED,OUTPUT);
+  IR.enableIRIn();
+ 
+}
+
+void loop() 
+{
+    if(millis()>=interval)
+  {
+    lcd.setCursor(0,0);
+    lcd.print("BE SAFE MASTER!");
+    lcd.setCursor(0,1);
+    lcd.print("DOOR CLOSED");
+  }
+    while(IR.decode()) //remote light bulb
+   
+ {
+ Serial.println(IR.decodedIRData.decodedRawData,HEX);
+   if (IR.decodedIRData.decodedRawData==0xFF00BF00)
+   {
+   digitalWrite(LED,HIGH);
+  delay(t);
+   }
+     if (IR.decodedIRData.decodedRawData==0xFD02BF00)
+     {
+     digitalWrite(LED,LOW);   
+      delay(t1); 
+     }
+   IR.resume();
+ }
+  
+  long duration, inches, cm; 
+
+  pinMode(pingPin, OUTPUT);
+  digitalWrite(pingPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(pingPin, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(pingPin, LOW);
+
+  
+  pinMode(pingPin, INPUT);
+  duration = pulseIn(pingPin, HIGH);
+
+  
+  inches = microsecondsToInches(duration);
+  cm = microsecondsToCentimeters(duration);
+
+  servo1.write(0); //servo automatic front door 
+  
+  if(cm < 40)
+  {
+    servo1.write(90);
+    lcd.setCursor(0,0);
+    lcd.print("WELCOME MASTER!");
+    lcd.setCursor(0,1);
+    lcd.print("DOOR OPENED");
+    delay(t);
+    lcd.clear();
+  }
+  else
+  {
+    servo1.write(0);
+  }
+  // pir sensor codes for motion sensor using 6 LEDs
+ 
+  int pir = digitalRead(2);
+  
+  if(pir == HIGH)
+  {
+    digitalWrite(4,HIGH);
+  }
+  else if(pir == LOW)
+  {
+    digitalWrite(4,LOW);
+  }
+  delay(t);
+  
+}
+long microsecondsToInches(long microseconds) {
+  return microseconds / 74 / 2;
+}
+
+long microsecondsToCentimeters(long microseconds) {
+  return microseconds / 29 / 2;
+}
+
